@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Soft rounded home / geometric mark -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M54,28c-2.2,0 -4,1.2 -5.1,3L30.5,58.2c-1.4,2.3 -0.3,5.4 2.3,6.3 0.7,0.2 1.5,0.3 2.2,0.3h6v12c0,2.2 1.8,4 4,4h20c2.2,0 4,-1.8 4,-4V64.8h6c0.7,0 1.5,-0.1 2.2,-0.3 2.6,-0.9 3.7,-4 2.3,-6.3L59.1,31c-1.1,-1.8 -2.9,-3 -5.1,-3zM54,36.5l14.5,23.3H64c-1.1,0 -2,0.9 -2,2v12H46v-12c0,-1.1 -0.9,-2 -2,-2h-4.5L54,36.5z" />
+    <path
+        android:fillColor="#E0E0FF"
+        android:fillAlpha="0.35"
+        android:pathData="M54,42c-6.6,0 -12,5.4 -12,12s5.4,12 12,12 12,-5.4 12,-12 -5.4,-12 -12,-12z" />
+</vector>

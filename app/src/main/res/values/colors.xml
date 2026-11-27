@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="lumora_primary">#5B5FEF</color>
+    <color name="lumora_on_primary">#FFFFFF</color>
+    <color name="lumora_primary_container">#E0E0FF</color>
+    <color name="lumora_secondary">#7B61FF</color>
+    <color name="lumora_tertiary">#9C6ADE</color>
+    <color name="ic_launcher_background">#5B5FEF</color>
+</resources>

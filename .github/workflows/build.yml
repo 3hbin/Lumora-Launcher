@@ -1,0 +1,89 @@
+name: Build & Release
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+    inputs:
+      create_release:
+        description: 'Create GitHub Release with APK'
+        required: false
+        default: 'false'
+        type: boolean
+      version_name:
+        description: 'Version name for release (e.g. 1.0.1)'
+        required: false
+        default: ''
+      version_code:
+        description: 'Version code integer (must increase)'
+        required: false
+        default: ''
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Build Debug APK
+        run: ./gradlew --no-daemon clean assembleDebug
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: lumora-launcher-debug
+          path: app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 30
+
+      - name: Compute SHA-256
+        id: sha
+        run: |
+          SHA=$(sha256sum app/build/outputs/apk/debug/app-debug.apk | awk '{print $1}')
+          echo "sha256=$SHA" >> $GITHUB_OUTPUT
+          echo "SHA-256: $SHA"
+
+      - name: Create GitHub Release
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.create_release == 'true' }}
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ inputs.version_name || '1.0.0' }}
+          name: Lumora Launcher ${{ inputs.version_name || '1.0.0' }}
+          body: |
+            ## Lumora Launcher ${{ inputs.version_name || '1.0.0' }}
+
+            **versionCode:** ${{ inputs.version_code || '2' }}
+
+            ### Changelog
+            - See commit history for details.
+
+            ### SHA-256
+            ```
+            ${{ steps.sha.outputs.sha256 }}
+            ```
+
+            ### Install
+            1. Download the APK below.
+            2. Open the APK on your device (enable install from unknown sources if needed).
+            3. Confirm the update. Your launcher data is preserved.
+          files: |
+            app/build/outputs/apk/debug/app-debug.apk
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
