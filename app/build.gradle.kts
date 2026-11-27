@@ -1,6 +1,7 @@
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
+    id("org.jetbrains.kotlin.plugin.compose")
     id("com.google.devtools.ksp")
 }
 
@@ -49,9 +50,8 @@ android {
         buildConfig = true
     }
 
-    composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.15"
-    }
+    // Kotlin 2.0+: Compose Compiler is applied via org.jetbrains.kotlin.plugin.compose
+    // Do not set kotlinCompilerExtensionVersion here.
 
     packaging {
         resources {
@@ -76,31 +76,18 @@ dependencies {
     implementation("androidx.compose.foundation:foundation")
     implementation("androidx.compose.animation:animation")
 
-    // Lifecycle & ViewModel
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7")
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.7")
 
-    // Navigation
     implementation("androidx.navigation:navigation-compose:2.8.3")
-
-    // DataStore
     implementation("androidx.datastore:datastore-preferences:1.1.1")
-
-    // Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0")
 
-    // Accompanist (permissions, system UI)
     implementation("com.google.accompanist:accompanist-systemuicontroller:0.36.0")
     implementation("com.google.accompanist:accompanist-permissions:0.36.0")
 
-    // Gson for backup
     implementation("com.google.code.gson:gson:2.11.0")
-
-    // WorkManager for periodic update checks
     implementation("androidx.work:work-runtime-ktx:2.9.1")
-
-    // Glance for widgets (optional future)
-    // implementation("androidx.glance:glance-appwidget:1.1.1")
 
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")

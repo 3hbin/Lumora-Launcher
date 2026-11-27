@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+<defs>
+  <linearGradient id="roof" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="#FFFFFF"/><stop offset=".55" stop-color="#C9F7FF"/><stop offset="1" stop-color="#4FE3FF"/>
+  </linearGradient>
+  <linearGradient id="glass" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#FFFFFF" stop-opacity=".34"/><stop offset="1" stop-color="#FFFFFF" stop-opacity=".10"/>
+  </linearGradient>
+  <linearGradient id="glassEdge" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="#FFFFFF" stop-opacity=".85"/><stop offset=".6" stop-color="#FFFFFF" stop-opacity=".15"/><stop offset="1" stop-color="#7DEBFF" stop-opacity=".5"/>
+  </linearGradient>
+  <linearGradient id="light" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="#7CF4FF"/><stop offset=".55" stop-color="#2FD3FF"/><stop offset="1" stop-color="#8F7CFF"/>
+  </linearGradient>
+  <radialGradient id="glow">
+    <stop offset="0" stop-color="#22D3EE" stop-opacity=".75"/><stop offset="1" stop-color="#22D3EE" stop-opacity="0"/>
+  </radialGradient>
+  <filter id="blur18" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="18"/></filter>
+</defs>
+<g transform="translate(512 512) scale(1.0) translate(-487 -492)">
+  <!-- soft ground shadow -->
+  <ellipse cx="512" cy="790" rx="190" ry="22" fill="#0A0F4A" opacity=".28" filter="url(#blur18)"/>
+  <!-- glass body -->
+  <path d="M320 544 L512 352 L704 544 V692 a68 68 0 0 1 -68 68 H388 a68 68 0 0 1 -68 -68 Z" fill="url(#glass)" stroke="url(#glassEdge)" stroke-width="5" stroke-linejoin="round"/>
+  <!-- inner light glow -->
+  <circle cx="514" cy="654" r="125" fill="url(#glow)" filter="url(#blur18)"/>
+  <!-- L-shaped light -->
+  <path d="M452 580 H500 V680 H582 V728 H452 Z" fill="url(#light)" stroke="url(#light)" stroke-width="22" stroke-linejoin="round"/>
+  <!-- L roof (chevron = L rotated 45deg, long left arm / short right arm) -->
+  <path d="M252 512 L512 262 L722 472" fill="none" stroke="url(#roof)" stroke-width="78" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M262 500 L512 260" fill="none" stroke="#fff" stroke-opacity=".55" stroke-width="10" stroke-linecap="round" transform="translate(0 -22)"/>
+</g></svg>
