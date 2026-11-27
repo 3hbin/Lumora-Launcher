@@ -330,6 +330,24 @@ fun HomePageContent(
                         onLongClick = { if (isEditMode) onRemove(item.id) }
                     )
                 }
+                is HomeItem.Widget -> {
+                    // Widget host view is managed separately; show placeholder cell in grid
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height((settings.iconSizeDp * item.spanY).dp)
+                            .padding(4.dp)
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "Widget",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
             }
         }
     }
@@ -401,6 +419,7 @@ fun AppIcon(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun FolderIcon(
     folder: HomeItem.Folder,
