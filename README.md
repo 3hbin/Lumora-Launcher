@@ -91,3 +91,19 @@ Install the APK → press Home → choose **Lumora Launcher** → Always.
 ## License
 
 MIT
+
+
+## Security notes (Play Protect)
+
+This build is hardened for sideload safety:
+
+- **No** `REQUEST_INSTALL_PACKAGES` – updates open the GitHub Releases page in a browser; the user installs manually.
+- **No** Device Administrator component.
+- **No** in-app APK download/install.
+- `QUERY_ALL_PACKAGES` is kept because a real launcher must list installed apps.
+- Location is only used if the user enables weather.
+- Dependencies are standard AndroidX / Google libraries only.
+
+Play Protect may still warn about **unknown developer** / **debug-signed** APKs the first time. That is expected for sideloaded apps that are not on Play Store. Use “Install anyway” after reviewing the source on GitHub.
+
+For distribution, prefer a **release-signed** APK (your own keystore, never commit secrets) and keep the same signing key across versions.

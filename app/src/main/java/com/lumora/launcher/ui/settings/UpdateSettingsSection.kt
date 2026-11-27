@@ -1,5 +1,7 @@
 package com.lumora.launcher.ui.settings
 
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -11,16 +13,15 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.CloudDownload
-import androidx.compose.material.icons.filled.Error
+import androidx.compose.material.icons.filled.OpenInBrowser
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.SystemUpdate
+import androidx.compose.material.icons.filled.Error
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -29,28 +30,29 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.lumora.launcher.LumoraApp
-import com.lumora.launcher.update.ApkInstaller
+import com.lumora.launcher.update.UpdateConfig
 import com.lumora.launcher.update.UpdateState
 import kotlinx.coroutines.launch
-import java.io.File
 
+/**
+ * Update UI – checks GitHub Releases API for version info only.
+ * Does NOT download or install APKs in-app (Play Protect / security).
+ * User is directed to the official Releases page in the browser.
+ */
 @Composable
 fun UpdateSettingsSection() {
     val context = LocalContext.current
     val updateRepo = remember { (context.applicationContext as LumoraApp).updateRepository }
     val uiState by updateRepo.uiState.collectAsState()
     val scope = rememberCoroutineScope()
-    var downloadedFile by remember { mutableStateOf<File?>(null) }
 
     Column(
         modifier = Modifier
@@ -76,7 +78,7 @@ fun UpdateSettingsSection() {
 
         ListItem(
             headlineContent = { Text("Check for updates daily") },
-            supportingContent = { Text("Uses GitHub Releases · low battery impact") },
+            supportingContent = { Text("Only checks version metadata · no background downloads") },
             trailingContent = {
                 Switch(
                     checked = uiState.autoCheckDaily,
@@ -96,7 +98,7 @@ fun UpdateSettingsSection() {
             Column(modifier = Modifier.padding(16.dp)) {
                 when (uiState.state) {
                     UpdateState.IDLE -> {
-                        Text("Tap “Check for updates” to look for a new version.")
+                        Text("Tap “Check for updates” to look for a new version on GitHub.")
                     }
                     UpdateState.CHECKING -> {
                         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -129,49 +131,12 @@ fun UpdateSettingsSection() {
                         if (!body.isNullOrBlank()) {
                             Spacer(modifier = Modifier.height(8.dp))
                             Text(
-                                text = body.take(600) + if (body.length > 600) "…" else "",
+                                text = body.take(500) + if (body.length > 500) "…" else "",
                                 style = MaterialTheme.typography.bodySmall,
-                                maxLines = 8,
+                                maxLines = 6,
                                 overflow = TextOverflow.Ellipsis
                             )
                         }
-                        val published = latest?.publishedAt
-                        if (published != null) {
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text(
-                                text = "Published: ${published.take(10)}",
-                                style = MaterialTheme.typography.labelSmall
-                            )
-                        }
-                    }
-                    UpdateState.DOWNLOADING -> {
-                        Text("Downloading… ${(uiState.downloadProgress * 100).toInt()}%")
-                        Spacer(modifier = Modifier.height(8.dp))
-                        LinearProgressIndicator(
-                            progress = { uiState.downloadProgress },
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                        val total = uiState.latest?.apkSizeBytes ?: 0L
-                        val sizeText = if (total > 0) {
-                            "${formatBytes(uiState.downloadedBytes)} / ${formatBytes(total)}"
-                        } else {
-                            formatBytes(uiState.downloadedBytes)
-                        }
-                        Text(text = sizeText, style = MaterialTheme.typography.labelSmall)
-                    }
-                    UpdateState.DOWNLOADED -> {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                Icons.Default.CloudDownload,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary
-                            )
-                            Spacer(modifier = Modifier.width(12.dp))
-                            Text("Download complete – ready to install")
-                        }
-                    }
-                    UpdateState.INSTALLING -> {
-                        Text("Opening system installer…")
                     }
                     UpdateState.ERROR -> {
                         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -182,10 +147,13 @@ fun UpdateSettingsSection() {
                             )
                             Spacer(modifier = Modifier.width(12.dp))
                             Text(
-                                text = uiState.errorMessage ?: "Unknown error",
+                                text = uiState.errorMessage ?: "Check failed",
                                 color = MaterialTheme.colorScheme.error
                             )
                         }
+                    }
+                    else -> {
+                        Text("Status: ${uiState.state}")
                     }
                 }
             }
@@ -197,7 +165,7 @@ fun UpdateSettingsSection() {
         ) {
             OutlinedButton(
                 onClick = { scope.launch { updateRepo.checkForUpdate() } },
-                enabled = uiState.state != UpdateState.CHECKING && uiState.state != UpdateState.DOWNLOADING
+                enabled = uiState.state != UpdateState.CHECKING
             ) {
                 Icon(
                     Icons.Default.Refresh,
@@ -208,51 +176,34 @@ fun UpdateSettingsSection() {
                 Text("Check for updates")
             }
 
-            if (uiState.state == UpdateState.UPDATE_AVAILABLE && uiState.latest?.apkDownloadUrl != null) {
-                val latest = uiState.latest
-                Button(
-                    onClick = {
-                        if (latest != null) {
-                            scope.launch {
-                                updateRepo.downloadApk(latest).onSuccess { file ->
-                                    downloadedFile = file
-                                }
-                            }
-                        }
+            // Always offer opening the official releases page (safe path)
+            Button(
+                onClick = {
+                    val url = uiState.latest?.htmlUrl ?: UpdateConfig.releasesPageUrl
+                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url)).apply {
+                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                     }
-                ) {
-                    Text("Download")
+                    context.startActivity(intent)
                 }
-            }
-
-            if (uiState.state == UpdateState.DOWNLOADED && downloadedFile != null) {
-                val file = downloadedFile
-                Button(
-                    onClick = {
-                        if (file == null) return@Button
-                        if (!ApkInstaller.canRequestInstall(context)) {
-                            ApkInstaller.openInstallPermissionSettings(context)
-                        } else {
-                            ApkInstaller.install(context, file)
-                        }
-                    }
-                ) {
-                    Text("Install")
-                }
+            ) {
+                Icon(
+                    Icons.Default.OpenInBrowser,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(
+                    if (uiState.state == UpdateState.UPDATE_AVAILABLE) "Get update"
+                    else "Open releases"
+                )
             }
         }
 
         Spacer(modifier = Modifier.height(8.dp))
         Text(
-            text = "Source: github.com/3hbin/Lumora-Launcher/releases",
+            text = "Updates are installed manually from GitHub Releases. Lumora never downloads or installs APKs by itself.",
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
-}
-
-private fun formatBytes(bytes: Long): String {
-    if (bytes < 1024) return "$bytes B"
-    if (bytes < 1024 * 1024) return "${bytes / 1024} KB"
-    return "%.1f MB".format(bytes / (1024.0 * 1024.0))
 }

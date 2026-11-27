@@ -3,53 +3,30 @@ package com.lumora.launcher.update
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
-import android.os.Build
-import androidx.core.content.FileProvider
 import java.io.File
 
 /**
- * Opens the system Package Installer for a downloaded APK.
- * Never installs silently – user must confirm.
+ * Intentionally does NOT install APKs in-app.
+ * Play Protect treats REQUEST_INSTALL_PACKAGES + APK download as a high-risk pattern.
+ * Users install updates from the official GitHub Releases page in a browser.
  */
 object ApkInstaller {
 
-    fun install(context: Context, apkFile: File) {
-        val uri: Uri = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            FileProvider.getUriForFile(
-                context,
-                "${context.packageName}.fileprovider",
-                apkFile
-            )
-        } else {
-            Uri.fromFile(apkFile)
-        }
-
-        val intent = Intent(Intent.ACTION_VIEW).apply {
-            setDataAndType(uri, "application/vnd.android.package-archive")
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_GRANT_READ_URI_PERMISSION
+    fun openReleasesPage(context: Context) {
+        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(UpdateConfig.releasesPageUrl)).apply {
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         }
         context.startActivity(intent)
     }
 
-    /**
-     * On Android 8+ the app may need REQUEST_INSTALL_PACKAGES.
-     * Returns true if the app is allowed to request installs.
-     */
-    fun canRequestInstall(context: Context): Boolean {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            context.packageManager.canRequestPackageInstalls()
-        } else {
-            true
-        }
+    /** @deprecated In-app install disabled for security posture. */
+    fun install(context: Context, apkFile: File) {
+        openReleasesPage(context)
     }
 
+    fun canRequestInstall(context: Context): Boolean = false
+
     fun openInstallPermissionSettings(context: Context) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val intent = Intent(
-                android.provider.Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
-                Uri.parse("package:${context.packageName}")
-            ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            context.startActivity(intent)
-        }
+        openReleasesPage(context)
     }
 }

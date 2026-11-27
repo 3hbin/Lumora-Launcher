@@ -190,80 +190,15 @@ class UpdateRepository(private val context: Context) {
      * Download APK to cache dir with progress updates.
      */
     suspend fun downloadApk(info: ReleaseInfo): Result<File> = withContext(Dispatchers.IO) {
-        val url = info.apkDownloadUrl ?: return@withContext Result.failure(Exception("No APK URL"))
+        // Disabled: in-app APK download/install triggers Play Protect and is intentionally not supported.
         _uiState.value = _uiState.value.copy(
-            state = UpdateState.DOWNLOADING,
-            downloadProgress = 0f,
-            downloadedBytes = 0L,
-            errorMessage = null
+            state = UpdateState.ERROR,
+            errorMessage = "In-app install disabled. Open GitHub Releases to download safely."
         )
-        try {
-            val dest = File(context.cacheDir, "lumora-update.apk")
-            if (dest.exists()) dest.delete()
-
-            val conn = (URL(url).openConnection() as HttpURLConnection).apply {
-                requestMethod = "GET"
-                connectTimeout = 20000
-                readTimeout = 60000
-                setRequestProperty("User-Agent", "LumoraLauncher-Updater")
-                instanceFollowRedirects = true
-            }
-            val total = conn.contentLengthLong.let { if (it > 0) it else info.apkSizeBytes }
-            conn.inputStream.use { input ->
-                FileOutputStream(dest).use { output ->
-                    val buffer = ByteArray(8192)
-                    var read: Int
-                    var downloaded = 0L
-                    while (input.read(buffer).also { read = it } != -1) {
-                        output.write(buffer, 0, read)
-                        downloaded += read
-                        val progress = if (total > 0) (downloaded.toFloat() / total).coerceIn(0f, 1f) else 0f
-                        _uiState.value = _uiState.value.copy(
-                            downloadProgress = progress,
-                            downloadedBytes = downloaded
-                        )
-                    }
-                }
-            }
-
-            // Optional SHA-256 check
-            if (!info.sha256.isNullOrBlank()) {
-                val actual = sha256Of(dest)
-                if (!actual.equals(info.sha256, ignoreCase = true)) {
-                    dest.delete()
-                    _uiState.value = _uiState.value.copy(
-                        state = UpdateState.ERROR,
-                        errorMessage = "SHA-256 mismatch – file corrupted or tampered"
-                    )
-                    return@withContext Result.failure(Exception("SHA-256 mismatch"))
-                }
-            }
-
-            // Basic package name check via PackageManager (does not install)
-            if (!verifyPackageName(dest)) {
-                dest.delete()
-                _uiState.value = _uiState.value.copy(
-                    state = UpdateState.ERROR,
-                    errorMessage = "APK package name does not match com.lumora.launcher"
-                )
-                return@withContext Result.failure(Exception("Package name mismatch"))
-            }
-
-            _uiState.value = _uiState.value.copy(
-                state = UpdateState.DOWNLOADED,
-                downloadProgress = 1f
-            )
-            Result.success(dest)
-        } catch (e: Exception) {
-            Log.e("LumoraUpdate", "Download failed", e)
-            _uiState.value = _uiState.value.copy(
-                state = UpdateState.ERROR,
-                errorMessage = e.message ?: "Download failed"
-            )
-            Result.failure(e)
-        }
+        Result.failure(Exception("In-app APK install disabled for security"))
     }
 
+    
     private fun sha256Of(file: File): String {
         val digest = MessageDigest.getInstance("SHA-256")
         file.inputStream().use { input ->
